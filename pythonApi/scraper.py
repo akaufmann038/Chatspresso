@@ -26,13 +26,15 @@ class LinkedIn_Scraper:
 
         self.chrome_options = chrome_options
 
+        # TODO: uncomment for production to handle concurrent requests
         driver0 = webdriver.Chrome(options=chrome_options)
-        driver1 = webdriver.Chrome(options=chrome_options)
-        driver2 = webdriver.Chrome(options=chrome_options)
-        driver3 = webdriver.Chrome(options=chrome_options)
-        driver4 = webdriver.Chrome(options=chrome_options)
+        #driver1 = webdriver.Chrome(options=chrome_options)
+        #driver2 = webdriver.Chrome(options=chrome_options)
+        #driver3 = webdriver.Chrome(options=chrome_options)
+        #driver4 = webdriver.Chrome(options=chrome_options)
 
-        self.driver.extend([driver0, driver1, driver2, driver3, driver4])
+        self.driver.extend([driver0])
+        #self.driver.extend([driver0, driver1, driver2, driver3, driver4])
 
     def wait_until(self, driver, class_name):
         # if browser hits authwall, we want to quit driver and open up new one
