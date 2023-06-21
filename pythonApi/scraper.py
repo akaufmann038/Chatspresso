@@ -6,19 +6,33 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import time
+import uuid
 
 class LinkedIn_Scraper:
     def __init__(self):
-        self.driver = None
+        self.driver = [] # [driver0, driver1, ...]
+        self.driver_info = {} # owen: 0, grace: 1
+        self.chrome_options = None
+
+    # creates a new driver for the given request_id
+    def create_driver(self, request_id):
+        self.driver[self.driver_info[request_id]] = webdriver.Chrome(options=self.chrome_options)
 
     # create the selenium headless driver
-    def create_driver(self):
+    def init(self):
         chrome_options = ChromeOptions()
-        #chrome_options.add_argument("--headless=new")
+        chrome_options.add_argument("--headless=new")
         chrome_options.add_argument("--incognito")
-        driver = webdriver.Chrome(options=chrome_options)
 
-        self.driver = driver
+        self.chrome_options = chrome_options
+
+        driver0 = webdriver.Chrome(options=chrome_options)
+        driver1 = webdriver.Chrome(options=chrome_options)
+        driver2 = webdriver.Chrome(options=chrome_options)
+        driver3 = webdriver.Chrome(options=chrome_options)
+        driver4 = webdriver.Chrome(options=chrome_options)
+
+        self.driver.extend([driver0, driver1, driver2, driver3, driver4])
 
     def wait_until(self, driver, class_name):
         # if browser hits authwall, we want to quit driver and open up new one
@@ -26,32 +40,58 @@ class LinkedIn_Scraper:
             return True
         
         return driver.find_element(By.CLASS_NAME, class_name)
+    
+    # returns the first driver in the list that is not currently
+    # being used for a scrape
+    def assign_driver(self):
+        to_assign = None
+        
+        for d_index in range(len(self.driver)):
+            is_in = False
+
+            for job in self.driver_info.keys():
+                if d_index == self.driver_info[job]:
+                    is_in = True
+
+            if not is_in:
+                to_assign = d_index
+                break
+
+        return to_assign
+
+    # gets the driver object for the given request_id
+    def get_driver(self, id):
+        return self.driver[self.driver_info[id]]
 
     # given a user_id, scrapes that user's linkedin profile
     # user_id has to be the id in the linkedin url
-    def scrape_profile(self, user_id):
+    def scrape_profile(self, user_id, request_id):
+        self.driver_info[request_id] = self.assign_driver()
+        print(self.driver_info[request_id])
+
         url = "https://www.linkedin.com/in/{}/".format(user_id)
-        self.driver.get(url)
+        self.get_driver(request_id).get(url)
 
         # wait for webpage
-        wait = WebDriverWait(self.driver, timeout=10)
+        wait = WebDriverWait(self.get_driver(request_id), timeout=10)
         wait.until(lambda driver: self.wait_until(driver, "core-section-container__content"))
         wait.until(lambda driver: self.wait_until(driver, "top-card-layout__title"))
         wait.until(lambda driver: self.wait_until(driver, "top-card__subline-item"))
         wait.until(lambda driver: self.wait_until(driver, "profile"))
 
-        if "https://www.linkedin.com/authwall" in self.driver.current_url:
+        if "https://www.linkedin.com/authwall" in self.get_driver(request_id).current_url:
             # quit current driver, create new driver, navigate to new url
-            self.driver.quit()
-            self.create_driver()
-            return self.scrape_profile(user_id)
+            self.get_driver(request_id).quit()
 
-        #object = WebDriverWait(self.driver, timeout=10).until(EC.presence_of_element_located((By.XPATH, "//meta[@name='description']")))
-        #time.sleep(3)
+            self.create_driver(request_id)
 
-        print("url: " + self.driver.current_url)
-        src = self.driver.page_source
+            return self.scrape_profile(user_id, request_id)
+
+        src = self.get_driver(request_id).page_source
         soup = BeautifulSoup(src, features="html.parser")
+
+        # once soup is made, can get rid of request_id key
+        self.driver_info.pop(request_id)
 
         data = self.get_data(soup)
 
