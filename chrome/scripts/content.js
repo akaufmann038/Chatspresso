@@ -1,116 +1,64 @@
-let intervalId;
+const curr_url = window.location.href;
 
-const getExperienceData = (container) => {
-  // title: parent displayflex
-  // working date or location or littleDescription: parent t-14
-  // description or skills: parent inline-show-more-text
-  let experiences = [];
+const addPopUpStyling = (popUp, url) => {
+  popUp.setAttribute("id", "pop-up");
+  popUp.style.background =
+    "rgb(255, 91, 26) linear-gradient(180deg, rgba(255, 91, 26, 1) 0%, rgba(255, 153, 0, 1) 100%)";
+  popUp.style.borderTopLeftRadius = "10px";
+  popUp.style.borderBottomLeftRadius = "10px";
+  popUp.style.width = "50px";
+  popUp.style.height = "50px";
+  popUp.style.position = "fixed";
+  popUp.style.top = "20%";
+  popUp.style.right = "0px";
+  popUp.style.display = "flex";
+  popUp.style.flexDirection = "row";
+  popUp.style.justifyContent = "center";
+  popUp.style.alignItems = "center";
 
-  for (const li of container) {
-    const allData = Array.from(li.querySelectorAll("span"))
-      .filter((element) => {
-        const classes = element.classList;
+  const logo = document.createElement("img");
+  logo.src = url;
 
-        if (
-          classes.contains("visually-hidden") ||
-          classes.contains("white-space-pre") ||
-          classes.contains("t-14") ||
-          classes.contains("pvs-entity__path-node")
-        ) {
-          return false;
-        }
-        return true;
-      })
-      .map((element) => {
-        return element.innerText;
-      });
+  logo.style.width = "40px";
+  logo.style.height = "40px";
 
-    experiences.push(allData);
-  }
+  popUp.appendChild(logo);
 
-  return experiences;
-};
-const getEducationData = (container) => {
-  let education = [];
+  popUp.addEventListener("mouseenter", () => {
+    // Code to run when the element is being hovered over
+    console.log("Element is being hovered over");
+  });
 
-  for (const li of container) {
-    //console.log(li.querySelectorAll("span"));
-    const allData = Array.from(li.querySelectorAll("span"))
-      .filter((element) => {
-        const classes = element.classList;
-
-        if (
-          classes.contains("t-14") ||
-          classes.contains("visually-hidden") ||
-          classes.contains("white-space-pre")
-        ) {
-          return false;
-        }
-        return true;
-      })
-      .map((element) => element.innerText);
-
-    education.push(allData);
-  }
-
-  return education;
-};
-const getData = () => {
-  const fullNameC = document.querySelector("h1");
-
-  const fullName = fullNameC.textContent;
-
-  const positionContainer1 = document.querySelector(
-    ".pv-text-details__left-panel"
-  );
-
-  const positionContainer2 = positionContainer1.querySelectorAll("div");
-
-  const position = positionContainer2[1].textContent;
-
-  const main = document.querySelector("main");
-
-  let aboutText;
-  let experience;
-  let education;
-
-  for (const child of main.children) {
-    const firstChild = child.firstElementChild.id;
-
-    if (firstChild == "about") {
-      aboutText = child.children[2].querySelector("span").innerText;
-    } else if (firstChild == "experience") {
-      experience = getExperienceData(
-        child.children[2].firstElementChild.children
-      );
-    } else if (firstChild == "education") {
-      education = getEducationData(
-        child.children[2].firstElementChild.children
-      );
-    }
-  }
-
-  return {
-    fullName: fullName,
-    position: position,
-    about: aboutText,
-    experience: experience,
-    education: education,
-  };
+  popUp.addEventListener("mouseleave", () => {
+    // Code to run when the element is no longer being hovered over
+    console.log("Element is no longer being hovered over");
+  });
 };
 
-const isLoaded = () => {
-  try {
-    const data = getData();
+const loadSidePopUp = async () => {
+  const response = await chrome.runtime.sendMessage({
+    message: "get_image_url",
+    image_url: "./images/logowhite1.png",
+  });
 
-    console.log(data);
-    clearInterval(intervalId);
-  } catch (err) {
-    console.log("error");
-  }
+  // create popUp element and add styling
+  const popUp = document.createElement("div");
+  addPopUpStyling(popUp, response.url);
+
+  // add popUp to DOM
+  const html = document.getElementsByTagName("html")[0];
+  html.appendChild(popUp);
 };
 
-intervalId = setInterval(isLoaded, 300);
+if (curr_url.includes("www.linkedin.com")) {
+  const split_url = curr_url.split("/");
+  const user_id = split_url[split_url.lenght - 2];
+
+  // TODO: make popup occur after page is fully loaded maybe
+  loadSidePopUp();
+} else {
+  console.log("not a linkedin profile");
+}
 
 chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
   const scrapedData = getData();
@@ -131,15 +79,3 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
 
   return true;
 });
-
-const loadSidePopUp = () => {
-  console.log("emotionally triggered");
-  const popUp = document.createElement("div");
-  popUp.textContent = "CoffeeChat";
-  popUp.style.backgroundColor = "blue";
-  popUp.style.borderRadius = "5px";
-
-  document.body.appendChild(popUp);
-};
-
-// NOTE: I don't think API is needed...

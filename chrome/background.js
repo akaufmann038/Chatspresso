@@ -1,6 +1,6 @@
-chrome.webNavigation.onCompleted.addListener(function (details) {
-  if (details.frameId == 0) {
-    console.log("hello");
+chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
+  if (request.message === "get_image_url") {
+    const image_url = chrome.runtime.getURL(request.image_url);
+    sendResponse({ url: image_url });
   }
 });
-console.log("hi");

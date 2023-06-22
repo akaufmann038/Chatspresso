@@ -17,5 +17,11 @@
     "service_worker": "background.js",
     "type": "module"
   },
-  "permissions": ["storage", "tabs", "webNavigation"]
+  "permissions": ["storage", "tabs", "webNavigation"],
+  "web_accessible_resources": [
+    {
+      "resources": ["/images/logowhite1.png"],
+      "matches": ["https://www.linkedin.com/*"]
+    }
+  ]
 }
