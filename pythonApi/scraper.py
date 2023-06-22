@@ -86,6 +86,7 @@ class LinkedIn_Scraper:
             self.get_driver(request_id).quit()
 
             self.create_driver(request_id)
+            self.driver_info.pop(request_id)
 
             return self.scrape_profile(user_id, request_id)
 
