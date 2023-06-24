@@ -1,5 +1,7 @@
 const curr_url = window.location.href;
 
+let sideScreenVisible = false;
+
 // -------------------------------------
 
 const addPopUpStyling = (popUp, logoUrl) => {
@@ -10,9 +12,9 @@ const addPopUpStyling = (popUp, logoUrl) => {
   popUp.style.borderBottomLeftRadius = "10px";
   popUp.style.width = "50px";
   popUp.style.height = "50px";
-  popUp.style.position = "fixed";
+  popUp.style.position = "absolute";
+  popUp.style.left = "-50px";
   popUp.style.top = "20%";
-  popUp.style.right = "0px";
   popUp.style.display = "flex";
   popUp.style.flexDirection = "row";
   popUp.style.justifyContent = "center";
@@ -21,6 +23,7 @@ const addPopUpStyling = (popUp, logoUrl) => {
   popUp.style.zIndex = "100";
 
   const logo = document.createElement("img");
+  logo.setAttribute("id", "chatspresso-popup-logo");
   logo.src = logoUrl;
   logo.style.width = "40px";
   logo.style.height = "40px";
@@ -29,23 +32,6 @@ const addPopUpStyling = (popUp, logoUrl) => {
   // animations
   popUp.style.transition = "height 0.2s, width 0.2s";
   logo.style.transition = "height 0.2s, width 0.2s";
-
-  // event listeners
-  popUp.addEventListener("mouseenter", () => {
-    popUp.style.width = "55px";
-    popUp.style.height = "55px";
-
-    logo.style.width = "45px";
-    logo.style.height = "45px";
-  });
-
-  popUp.addEventListener("mouseleave", () => {
-    popUp.style.width = "50px";
-    popUp.style.height = "50px";
-
-    logo.style.width = "40px";
-    logo.style.height = "40px";
-  });
 };
 
 const addSideScreenStyling = (sideScreen, logoUrl, minus_url, copy_url) => {
@@ -58,9 +44,7 @@ const addSideScreenStyling = (sideScreen, logoUrl, minus_url, copy_url) => {
   sideScreen.style.display = "flex";
   sideScreen.style.flexDirection = "column";
   sideScreen.style.alignItems = "center";
-  sideScreen.style.position = "absolute";
-  sideScreen.style.right = "0";
-  sideScreen.style.top = "30%";
+  sideScreen.style.position = "relative";
   sideScreen.style.zIndex = "100";
   sideScreen.style.background = "white";
 
@@ -93,6 +77,7 @@ const addSideScreenStyling = (sideScreen, logoUrl, minus_url, copy_url) => {
   sideScreen.appendChild(logo);
 
   const generate_button = document.createElement("div");
+  generate_button.setAttribute("id", "chatspresso-generate-button");
   generate_button.style.width = "120px";
   generate_button.style.height = "40px";
   generate_button.style.background =
@@ -106,6 +91,7 @@ const addSideScreenStyling = (sideScreen, logoUrl, minus_url, copy_url) => {
   generate_button.style.transition = "box-shadow 0.2s, transform 0.2s";
 
   const generate_text = document.createElement("a");
+  generate_text.setAttribute("id", "chatspresso-generate-text");
   generate_text.style.all = "unset";
   generate_text.textContent = "GENERATE";
   generate_text.style.color = "white";
@@ -113,18 +99,6 @@ const addSideScreenStyling = (sideScreen, logoUrl, minus_url, copy_url) => {
   generate_text.style.userSelect = "none";
   generate_text.style.transition = "transform 0.2s";
   generate_button.appendChild(generate_text);
-
-  generate_button.addEventListener("mousedown", () => {
-    generate_button.style.boxShadow = "3px 2px 22px 1px rgba(0, 0, 0, 0.24)";
-    generate_button.style.transform = "scale(0.90)";
-    generate_text.style.transform = "scale(0.9)";
-  });
-
-  generate_button.addEventListener("mouseup", () => {
-    generate_button.style.boxShadow = "7px 6px 28px 1px rgba(0, 0, 0, 0.24)";
-    generate_button.style.transform = "scale(1)";
-    generate_text.style.transform = "scale(1)";
-  });
 
   sideScreen.appendChild(generate_button);
 
@@ -186,6 +160,56 @@ const addSideScreenStyling = (sideScreen, logoUrl, minus_url, copy_url) => {
   sideScreen.appendChild(message_container);
 };
 
+const addEventListeners = () => {
+  const popUp = document.getElementById("pop-up");
+  const logo = document.getElementById("chatspresso-popup-logo");
+
+  popUp.addEventListener("mouseenter", () => {
+    popUp.style.width = "55px";
+    popUp.style.height = "55px";
+
+    logo.style.width = "45px";
+    logo.style.height = "45px";
+  });
+
+  popUp.addEventListener("mouseleave", () => {
+    popUp.style.width = "50px";
+    popUp.style.height = "50px";
+
+    logo.style.width = "40px";
+    logo.style.height = "40px";
+  });
+
+  popUp.addEventListener("click", () => {
+    const extension = document.getElementById("chatspresso-extension");
+
+    if (sideScreenVisible) {
+      extension.style.right = "-250px";
+      sideScreenVisible = false;
+    } else {
+      extension.style.right = "0px";
+      sideScreenVisible = true;
+    }
+  });
+
+  const generate_button = document.getElementById(
+    "chatspresso-generate-button"
+  );
+  const generate_text = document.getElementById("chatspresso-generate-text");
+
+  generate_button.addEventListener("mousedown", () => {
+    generate_button.style.boxShadow = "3px 2px 22px 1px rgba(0, 0, 0, 0.24)";
+    generate_button.style.transform = "scale(0.90)";
+    generate_text.style.transform = "scale(0.9)";
+  });
+
+  generate_button.addEventListener("mouseup", () => {
+    generate_button.style.boxShadow = "7px 6px 28px 1px rgba(0, 0, 0, 0.24)";
+    generate_button.style.transform = "scale(1)";
+    generate_text.style.transform = "scale(1)";
+  });
+};
+
 const loadExtension = async () => {
   // get image assets
   const response = await chrome.runtime.sendMessage({
@@ -198,13 +222,11 @@ const loadExtension = async () => {
     ],
   });
 
+  const body = document.getElementsByTagName("body")[0];
+
   // create popUp element and add styling
   const popUp = document.createElement("div");
   addPopUpStyling(popUp, response["./images/logowhite1.png"]);
-
-  // add popUp to DOM
-  const body = document.getElementsByTagName("body")[0];
-  body.appendChild(popUp);
 
   // create screen element and add styling
   const sideScreen = document.createElement("div");
@@ -215,8 +237,20 @@ const loadExtension = async () => {
     response["./images/copy.png"]
   );
 
+  sideScreen.appendChild(popUp);
+
+  const extension = document.createElement("div");
+  extension.setAttribute("id", "chatspresso-extension");
+  extension.style.position = "absolute";
+  extension.style.right = "0px";
+  extension.style.top = "20%";
+  extension.style.transition = "right 1s";
+  extension.appendChild(sideScreen);
+
   // add sideScreen to dom
-  body.appendChild(sideScreen);
+  body.appendChild(extension);
+
+  addEventListeners();
 };
 
 // -------------------------------------
