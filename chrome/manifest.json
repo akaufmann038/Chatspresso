@@ -20,7 +20,7 @@
   "permissions": ["storage", "tabs", "webNavigation"],
   "web_accessible_resources": [
     {
-      "resources": ["/images/logowhite1.png", "/images/reduce_line.png"],
+      "resources": ["/images/*"],
       "matches": ["https://www.linkedin.com/*"]
     }
   ]
