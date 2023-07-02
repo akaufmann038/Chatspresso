@@ -1,8 +1,80 @@
 const curr_url = window.location.href;
+const generateMessageHttp = "http://127.0.0.1:5000/generate-message";
+let user_id;
 
 let sideScreenVisible = false;
 
 // -------------------------------------
+
+// code for loading spinner
+function Spinner() {
+  Spinner.element = document.createElementNS(
+    "http://www.w3.org/2000/svg",
+    "svg"
+  );
+  let c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+  Spinner.element.setAttribute("width", "40");
+  Spinner.element.setAttribute("height", "40");
+  c.setAttribute("viewBox", "0 0 40 40");
+  c.setAttribute("cx", "20");
+  c.setAttribute("cy", "20");
+  c.setAttribute("r", "15");
+  c.setAttribute("stroke-width", "4");
+  c.setAttribute("stroke", "rgba(255, 91, 26, 1)");
+  c.setAttribute("fill", "transparent");
+  Spinner.element.appendChild(c);
+  //Spinner.element.style.cssText =
+  //  "position:absolute;left:calc(50% - 50px);top:calc(50% - 50px)";
+  //document.body.appendChild(Spinner.element);
+}
+Spinner.id = null;
+Spinner.element = null;
+Spinner.show = function () {
+  const c = 264,
+    m = 15;
+  Spinner.element.style.display = "block";
+  move1();
+  function move1() {
+    let i = 0,
+      o = 0;
+    move();
+    function move() {
+      if (i == c) move2();
+      else {
+        i += 4;
+        o += 8;
+        Spinner.element.setAttribute("stroke-dasharray", i + " " + (c - i));
+        Spinner.element.setAttribute("stroke-dashoffset", o);
+        Spinner.id = setTimeout(move, m);
+      }
+    }
+  }
+  function move2() {
+    let i = c,
+      o = c * 2;
+    move();
+    function move() {
+      if (i == 0) move1();
+      else {
+        i -= 4;
+        o += 4;
+        Spinner.element.setAttribute("stroke-dasharray", i + " " + (c - i));
+        Spinner.element.setAttribute("stroke-dashoffset", o);
+        Spinner.id = setTimeout(move, m);
+      }
+    }
+  }
+};
+Spinner.hide = function () {
+  Spinner.element.style.display = "none";
+  if (Spinner.id) {
+    clearTimeout(Spinner.id);
+    Spinner.id = null;
+  }
+  Spinner.element.setAttribute("stroke-dasharray", "0 264");
+  Spinner.element.setAttribute("stroke-dashoffset", "0");
+};
+Spinner();
 
 const addPopUpStyling = (popUp, logoUrl) => {
   popUp.setAttribute("id", "pop-up");
@@ -30,11 +102,12 @@ const addPopUpStyling = (popUp, logoUrl) => {
   popUp.appendChild(logo);
 
   // animations
-  popUp.style.transition = "height 0.2s, width 0.2s";
+  popUp.style.transition = "height 0.2s, width 0.2s, left 0.2s";
   logo.style.transition = "height 0.2s, width 0.2s";
 };
 
 const addSideScreenStyling = (sideScreen, logoUrl, minus_url, copy_url) => {
+  sideScreen.setAttribute("id", "chatspresso-side-screen");
   sideScreen.style.width = "250px";
   sideScreen.style.height = "460px";
   sideScreen.style.borderRadius = "10px";
@@ -103,6 +176,7 @@ const addSideScreenStyling = (sideScreen, logoUrl, minus_url, copy_url) => {
   sideScreen.appendChild(generate_button);
 
   const message_container = document.createElement("div");
+  message_container.setAttribute("id", "chatspresso-message-container");
   message_container.style.marginTop = "35px";
   message_container.style.background = "#f5f5f5";
   message_container.style.display = "flex";
@@ -116,6 +190,7 @@ const addSideScreenStyling = (sideScreen, logoUrl, minus_url, copy_url) => {
   message_container.style.position = "relative";
 
   const message = document.createElement("textarea");
+  message.setAttribute("id", "chatspresso-message");
   message.type = "text";
   message.style.all = "unset";
   message.style.backgroundColor = "#f5f5f5";
@@ -125,8 +200,7 @@ const addSideScreenStyling = (sideScreen, logoUrl, minus_url, copy_url) => {
   message.style.lineHeight = "1.3";
   message.rows = "15";
   message.cols = "23";
-  message.value =
-    "This is a message to your linkedin profile. Want to connect?";
+  message.value = "";
   message_container.appendChild(message);
 
   const copy_container = document.createElement("div");
@@ -163,10 +237,14 @@ const addSideScreenStyling = (sideScreen, logoUrl, minus_url, copy_url) => {
 const addEventListeners = () => {
   const popUp = document.getElementById("pop-up");
   const logo = document.getElementById("chatspresso-popup-logo");
+  const message_container = document.getElementById(
+    "chatspresso-message-container"
+  );
 
   popUp.addEventListener("mouseenter", () => {
     popUp.style.width = "55px";
     popUp.style.height = "55px";
+    popUp.style.left = "-55px";
 
     logo.style.width = "45px";
     logo.style.height = "45px";
@@ -175,6 +253,7 @@ const addEventListeners = () => {
   popUp.addEventListener("mouseleave", () => {
     popUp.style.width = "50px";
     popUp.style.height = "50px";
+    popUp.style.left = "-50px";
 
     logo.style.width = "40px";
     logo.style.height = "40px";
@@ -208,6 +287,40 @@ const addEventListeners = () => {
     generate_button.style.transform = "scale(1)";
     generate_text.style.transform = "scale(1)";
   });
+
+  generate_button.addEventListener("click", async () => {
+    const sideScreen = document.getElementById("chatspresso-side-screen");
+    sideScreen.removeChild(generate_button);
+    sideScreen.insertBefore(Spinner.element, message_container);
+    Spinner.show();
+
+    const message = document.getElementById("chatspresso-message");
+    fetch(generateMessageHttp, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ user_id: user_id }),
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.success) {
+          message.value = data.message;
+        } else {
+          message.value =
+            "I had trouble reading the profile, just click GENERATE to try again!";
+        }
+
+        sideScreen.removeChild(Spinner.element);
+        sideScreen.insertBefore(generate_button, message_container);
+        Spinner.hide();
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+
+        sideScreen.removeChild(Spinner.element);
+        sideScreen.insertBefore(generate_button, message_container);
+        Spinner.hide();
+      });
+  });
 };
 
 const loadExtension = async () => {
@@ -239,15 +352,15 @@ const loadExtension = async () => {
 
   sideScreen.appendChild(popUp);
 
-  const extension = document.createElement("div");
+  const extension = document.createElement("section");
   extension.setAttribute("id", "chatspresso-extension");
-  extension.style.position = "absolute";
-  extension.style.right = "0px";
+  extension.style.position = "fixed";
+  extension.style.right = "-250px";
   extension.style.top = "20%";
   extension.style.transition = "right 1s";
+  extension.style.zIndex = "999";
   extension.appendChild(sideScreen);
 
-  // add sideScreen to dom
   body.appendChild(extension);
 
   addEventListeners();
@@ -258,10 +371,8 @@ const loadExtension = async () => {
 // check for linkedin page
 if (curr_url.includes("www.linkedin.com")) {
   const split_url = curr_url.split("/");
-  const user_id = split_url[split_url.length - 2];
+  user_id = split_url[split_url.length - 2];
 
-  // TODO: make popup occur after page is fully loaded maybe -
-  // look at other extensions as examples
   loadExtension();
 } else {
   console.log("not a linkedin profile");
@@ -287,3 +398,5 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
 
   return true;
 });
+
+console.log("running");

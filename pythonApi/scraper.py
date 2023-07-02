@@ -21,7 +21,7 @@ class LinkedIn_Scraper:
     # create the selenium headless driver
     def init(self):
         chrome_options = ChromeOptions()
-        chrome_options.add_argument("--headless=new")
+        #chrome_options.add_argument("--headless=new")
         chrome_options.add_argument("--incognito")
 
         self.chrome_options = chrome_options
@@ -82,6 +82,8 @@ class LinkedIn_Scraper:
         wait.until(lambda driver: self.wait_until(driver, "profile"))
 
         if "https://www.linkedin.com/authwall" in self.get_driver(request_id).current_url:
+            print("authwall")
+            time.sleep(2)
             # quit current driver, create new driver, navigate to new url
             self.get_driver(request_id).quit()
 
