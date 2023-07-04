@@ -17,7 +17,7 @@ class SO_Scraper:
         response = requests.get(
             url='https://proxy.scrapeops.io/v1/',
             params=urlencode(proxy_params),
-            timeout=120,
+            timeout=30,
         )
         if response.status_code == 200:
             soup = BeautifulSoup(response.content, features="html.parser")
@@ -158,3 +158,10 @@ class SO_Scraper:
                         data["education"].append(curr_education)
 
         return data
+
+
+'''
+scraper = SO_Scraper()
+res = scraper.scrape("sonija-ashkinezer-993206186")
+print(res)
+'''

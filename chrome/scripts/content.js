@@ -295,6 +295,22 @@ const addEventListeners = () => {
     Spinner.show();
 
     const message = document.getElementById("chatspresso-message");
+    message.value = "";
+
+    const intervalMessage = "Brewing....";
+    let i = 0;
+
+    var typeInterval = setInterval(() => {
+      message.value += intervalMessage[i];
+
+      i += 1;
+
+      if (i == intervalMessage.length) {
+        i = 0;
+        message.value = "";
+      }
+    }, 100);
+
     fetch(generateMessageHttp, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -302,6 +318,8 @@ const addEventListeners = () => {
     })
       .then((response) => response.json())
       .then((data) => {
+        clearInterval(typeInterval);
+
         if (data.success) {
           message.value = data.message;
         } else {
@@ -316,6 +334,7 @@ const addEventListeners = () => {
       .catch((error) => {
         console.error("Error:", error);
 
+        clearInterval(typeInterval);
         sideScreen.removeChild(Spinner.element);
         sideScreen.insertBefore(generate_button, message_container);
         Spinner.hide();
@@ -370,7 +389,7 @@ const loadExtension = async () => {
 
 // check for linkedin page
 if (curr_url.includes("www.linkedin.com")) {
-  const split_url = curr_url.split("/");
+  let split_url = curr_url.split("/");
   user_id = split_url[split_url.length - 2];
 
   loadExtension();
@@ -378,25 +397,18 @@ if (curr_url.includes("www.linkedin.com")) {
   console.log("not a linkedin profile");
 }
 
-// fetch example
+// listen for new userId from service worker
 chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
-  const scrapedData = getData();
+  console.log("getting new id");
 
-  fetch("http://localhost:3000/generate-message", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(scrapedData),
-  })
-    .then((response) => response.json())
-    .then((data) => {
-      console.log(data);
-      sendResponse(data.message);
-    })
-    .catch((error) => {
-      console.error("Error:", error);
-    });
+  // upon navigating to new profile, set new userId and clear value from text box
+  if (request.message == "new user id") {
+    user_id = request.userId;
 
-  return true;
+    document.getElementById("chatspresso-message").value = "";
+  }
+
+  sendResponse({ farewell: "goodbye" });
 });
 
 console.log("running");
